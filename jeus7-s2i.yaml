@@ -69,7 +69,7 @@ objects:
         uri: ${SOURCE_REPOSITORY_URL}
       type: Git
     strategy:
-      dockerStrategy:
+      sourceStrategy:
         env:
         - name: MAVEN_MIRROR_URL
           value: ${MAVEN_MIRROR_URL}
@@ -80,7 +80,7 @@ objects:
           kind: ImageStreamTag
           name: jeus7-s2i:0.5
           namespace: ${IMAGE_STREAM_NAMESPACE}
-      type: Docker
+      type: Source
     triggers:
     - github:
         secret: ${GITHUB_WEBHOOK_SECRET}
