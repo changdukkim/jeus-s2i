@@ -1,0 +1,250 @@
+apiVersion: template.openshift.io/v1
+kind: Template
+labels:
+  template: jeus-webtob-s2i-openshift
+message: |-
+  The following service(s) have been created in your project: ${NAME}.
+  For more information about using this template, including OpenShift considerations, see https://github.com/openshift/webtob-ex/blob/master/README.md.
+metadata:
+  annotations:
+    description: Jeus and Webtob HTTP Server application that serves static
+      content.
+    iconClass: icon-apache
+    openshift.io/display-name: Jeus and Webtob HTTP Server for Openshift
+    openshift.io/long-description: This template defines resources needed to develop
+      a static application served by Jeus and Webtob Server, including a build
+      configuration and application deployment configuration.
+    tags: quickstart,webtob,jeus
+    template.openshift.io/bindable: "false"
+  name: jeus-webtob-s2i-openshift
+  namespace: openshift
+objects:
+- apiVersion: v1
+  kind: Service
+  metadata:
+    annotations:
+      description: Exposes and load balances the application pods
+    name: ${NAME}
+  spec:
+    ports:
+    - name: web
+      port: 8080
+      targetPort: 8080
+    selector:
+      name: ${NAME}
+      
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: ${NAME}
+  spec:
+    host: ${APPLICATION_DOMAIN}
+    to:
+      kind: Service
+      name: ${NAME}
+      
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      description: Keeps track of changes in the Jeus
+    name: ${BACKEND_NAME}
+    
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      description: Keeps track of changes in the Webtob
+    name: ${NAME}
+    
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      description: Defines how to build the application
+      template.alpha.openshift.io/wait-for-ready: "true"
+    name: ${NAME}
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${NAME}:latest
+    source:
+      contextDir: ${CONTEXT_DIR}
+      git:
+        ref: ${SOURCE_REPOSITORY_REF}
+        uri: ${SOURCE_REPOSITORY_URL}
+      type: Git
+    strategy:
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: webtob-s2i:4.1.9.1
+          namespace: ${NAMESPACE}
+      type: Source
+    triggers:
+    - type: ImageChange
+    - type: ConfigChange
+    - github:
+        secret: ${GITHUB_WEBHOOK_SECRET}
+      type: GitHub
+    - generic:
+        secret: ${GENERIC_WEBHOOK_SECRET}
+      type: Generic
+      
+- apiVersion: v1
+  kind: BuildConfig
+  metadata:
+    annotations:
+      description: Defines how to build the application
+      template.alpha.openshift.io/wait-for-ready: "true"
+    name: ${BACKEND_NAME}
+  spec:
+    output:
+      to:
+        kind: ImageStreamTag
+        name: ${BACKEND_NAME}:latest
+    source:
+      contextDir: ${CONTEXT_DIR}
+      git:
+        ref: ${SOURCE_REPOSITORY_REF}
+        uri: ${SOURCE_REPOSITORY_URL}
+      type: Git
+    strategy:
+      sourceStrategy:
+        from:
+          kind: ImageStreamTag
+          name: jeus7-s2i:0.5
+          namespace: ${NAMESPACE}
+      type: Source
+    triggers:
+    - type: ImageChange
+    - type: ConfigChange
+    - github:
+        secret: ${GITHUB_WEBHOOK_SECRET}
+      type: GitHub
+    - generic:
+        secret: ${GENERIC_WEBHOOK_SECRET}
+      type: Generic
+      
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    annotations:
+      description: Defines how to deploy the application server
+      template.alpha.openshift.io/wait-for-ready: "true"
+    name: ${NAME}
+  spec:
+    replicas: 1
+    selector:
+      name: ${NAME}
+    strategy:
+      type: Rolling
+    template:
+      metadata:
+        labels:
+          name: ${NAME}
+        name: ${NAME}
+      spec:
+        containers:
+        - env: []
+          image: ${NAME}
+          command: ["/bin/sh","-c"]
+          args: ["/root/webtob/bin/wscfl -i /root/webtob/config/http.m; /root/webtob/bin/wsboot; while true; do /root/webtob/bin/wsadmin -C ci; sleep 1; done"]
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            timeoutSeconds: 3
+          name: ${NAME}
+          ports:
+          - containerPort: 8080
+          - containerPort: 9900
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 3
+            timeoutSeconds: 3
+          resources:
+            limits:
+              memory: ${MEMORY_LIMIT}
+        hostname: webtob
+          image: ${BACKEND_NAME}
+          imagePullPolicy: Always
+          command: ["/bin/sh", "-c"]
+          args: ["/home/tmax/jeus7/domains/jeus_domain/bin/startManagedServer -domain jeus_domain -server server1 -u administrator -p jeusadmin --verbose"]
+          name: ${BACKEND_NAME}
+          ports:
+          - containerPort: 8088
+            name: http
+            protocol: TCP
+        terminationGracePeriodSeconds: 60
+    triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${NAME}
+        from:
+          kind: ImageStreamTag
+          name: ${NAME}:latest
+      type: ImageChange
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+        - ${BACKEND_NAME}
+        from:
+          kind: ImageStreamTag
+          name: ${BACKEND_NAME}:latest
+      type: ImageChange
+    - type: ConfigChange
+parameters:
+- description: The name assigned to all of the frontend objects defined in this template. (Webtob)
+  displayName: Name
+  name: NAME
+  required: true
+  value: webtob-example
+- description: The name assigned to all of the frontend objects defined in this template. (Jeus)
+  displayName: Name
+  name: NAME
+  required: true
+  value: jeus-example
+- description: The OpenShift Namespace where the ImageStream resides.
+  displayName: Namespace
+  name: NAMESPACE
+  required: true
+  value: openshift
+- description: Maximum amount of memory the container can use.
+  displayName: Memory Limit
+  name: MEMORY_LIMIT
+  required: true
+  value: 512Mi
+- description: The URL of the repository with your application source code.
+  displayName: Git Repository URL
+  name: SOURCE_REPOSITORY_URL
+  required: true
+  value: https://github.com/changdukkim/webtob-ex.git
+- description: Set this to a branch name, tag or other ref of your repository if you
+    are not using the default branch.
+  displayName: Git Reference
+  name: SOURCE_REPOSITORY_REF
+- description: Set this to the relative path to your project if it is not in the root
+    of your repository.
+  displayName: Context Directory
+  name: CONTEXT_DIR
+- description: The exposed hostname that will route to the webtob service, if left
+    blank a value will be defaulted.
+  displayName: Application Hostname
+  name: APPLICATION_DOMAIN
+- description: Github trigger secret.  A difficult to guess string encoded as part
+    of the webhook URL.  Not encrypted.
+  displayName: GitHub Webhook Secret
+  from: '[a-zA-Z0-9]{40}'
+  generate: expression
+  name: GITHUB_WEBHOOK_SECRET
+- description: A secret string used to configure the Generic webhook.
+  displayName: Generic Webhook Secret
+  from: '[a-zA-Z0-9]{40}'
+  generate: expression
+  name: GENERIC_WEBHOOK_SECRET
