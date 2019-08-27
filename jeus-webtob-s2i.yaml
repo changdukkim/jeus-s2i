@@ -18,6 +18,7 @@ metadata:
     template.openshift.io/bindable: "false"
   name: jeus-webtob-s2i-openshift
   namespace: openshift
+  
 objects:
 - apiVersion: v1
   kind: Service
@@ -42,20 +43,22 @@ objects:
     to:
       kind: Service
       name: ${NAME}
-      
-- apiVersion: v1
-  kind: ImageStream
-  metadata:
-    annotations:
-      description: Keeps track of changes in the Jeus
-    name: ${BACKEND_NAME}
-    
+    port:
+      targetPort: 8080
+     
 - apiVersion: v1
   kind: ImageStream
   metadata:
     annotations:
       description: Keeps track of changes in the Webtob
     name: ${NAME}
+
+- apiVersion: v1
+  kind: ImageStream
+  metadata:
+    annotations:
+      description: Keeps track of changes in the Jeus
+    name: ${BACKEND_NAME}
     
 - apiVersion: v1
   kind: BuildConfig
@@ -206,8 +209,8 @@ parameters:
   required: true
   value: webtob-example
 - description: The name assigned to all of the frontend objects defined in this template. (Jeus)
-  displayName: Name
-  name: NAME
+  displayName: Backend Name
+  name: BACKEND_NAME
   required: true
   value: jeus-example
 - description: The OpenShift Namespace where the ImageStream resides.
