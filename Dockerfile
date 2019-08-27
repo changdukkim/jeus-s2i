@@ -9,7 +9,8 @@ LABEL io.openshift.s2i.scripts-url=image:///usr/local/s2i
 
 COPY files/s2i/ /usr/local/s2i
 
-RUN chmod 775 /usr/local/s2i/* \
+RUN mkdir -p /home/tmax/jeus7/apps \
+  && chmod 775 /usr/local/s2i/* \
   && chmod -R 775 /home/tmax \
   && chown -R tmax:root /home/tmax 
 
