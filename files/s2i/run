@@ -1,0 +1,2 @@
+#!/bin/sh
+exec /home/tmax/jeus7/domains/jeus_domain/bin/startManagedServer -domain jeus_domain -server server1 -u administrator -p jeusadmin --verbose 

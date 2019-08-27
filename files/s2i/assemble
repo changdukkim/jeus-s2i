@@ -1,18 +1,22 @@
 #!/bin/bash
 LOCAL_SOURCE_DIR=/tmp/src
-WEBTOB_ROOT=/root/webtob
+JEUS_ROOT=/home/tmax/jeus7
 echo "---> Installing application source..."
 
 # apps files
-if [ -d $LOCAL_SOURCE_DIR/docs ]; then
+if [ -d $LOCAL_SOURCE_DIR/apps ]; then
   echo "Copying Application files from webapps of git project..."
-  cp -Rf $LOCAL_SOURCE_DIR/docs/* $WEBTOB_ROOT/docs/
+  cp -Rf $LOCAL_SOURCE_DIR/apps/* $JEUS_ROOT/apps/
 fi
 
 # configuration files
 if [ -d $LOCAL_SOURCE_DIR/config ]; then
   echo "Copying config files from conf of git project..."
-  cp -Rf $LOCAL_SOURCE_DIR/config/* $WEBTOB_ROOT/config/
-#  $WEBTOB_ROOT/bin/wscfl -i $WEBTOB_ROOT/config/http.m
+  cp -Rf $LOCAL_SOURCE_DIR/config/* $JEUS_ROOT/domains/jeus_domain/config/
 fi
 
+# library
+if [ -d $LOCAL_SOURCE_DIR/datasource ]; then
+  echo "Copying config files from conf of git project..."
+  cp -Rf $LOCAL_SOURCE_DIR/datasource/*.jar $JEUS_ROOT/lib/datasource/
+fi
