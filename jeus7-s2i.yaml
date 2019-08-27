@@ -125,12 +125,6 @@ objects:
           - containerPort: 8088
             name: http
             protocol: TCP
-          readinessProbe:
-            exec:
-              command:
-              - /bin/bash
-              - -c
-              - /home/tmax/jeus7/bin/check_process.sh
         terminationGracePeriodSeconds: 60
     triggers:
     - imageChangeParams:
