@@ -118,6 +118,8 @@ objects:
             value: ${JEUS_ADMIN_PASSWORD}
           image: ${APPLICATION_NAME}
           imagePullPolicy: Always
+          command: ["/bin/sh", "-c"]
+          args: ["/home/tmax/jeus7/domains/jeus_domain/bin/startManagedServer -domain jeus_domain -server server1 -u administrator -p jeusadmin --verbose"]
           name: ${APPLICATION_NAME}
           ports:
           - containerPort: 8088
