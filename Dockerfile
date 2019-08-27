@@ -17,6 +17,5 @@ RUN chmod 775 /usr/local/s2i/* \
 EXPOSE 8088
 
 USER 1000
-WORKDIR /home/tmax/ 
 # 실행명령
-CMD ["jeus7/domains/jeus_domain/bin/startManagedServer -domain jeus_domain -server server1 -u administrator -p jeusadmin --verbose"]
+CMD ["/home/tmax/jeus7/domains/jeus_domain/bin/startManagedServer -domain jeus_domain -server server1 -u administrator -p jeusadmin --verbose"]
